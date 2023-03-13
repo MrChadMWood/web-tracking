@@ -1,0 +1,13 @@
+<script>
+  if(!window.listeners || !window.listeners['beforeunload']) {
+    window.addEventListener('beforeunload', function() {
+      window.dataLayer.push({
+        event: 'beforeunload'
+      });
+    });
+    if(!window.listeners) {
+      window.listeners = {};
+    }
+    window.listeners['beforeunload'] = true;
+  }
+</script>
