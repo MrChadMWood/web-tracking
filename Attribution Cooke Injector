@@ -1,0 +1,72 @@
+<script>
+function setSessionAttributionCookie() {
+    // Function sets basic session cookie
+    function setSessionCookie(cookieName, cookieValue) {
+        var cookieString = cookieName + '=' + cookieValue + '; ';
+        cookieString += 'path=/; ';
+        cookieString += 'expires=0;';
+        
+        document.cookie = cookieString;
+        dataLayer.push({'event': 'cookieSet'});
+    }
+
+    // Define an array of parameter names to retrieve
+    var attributionParams = [
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'utm_content',
+        'network',
+        'funnel'
+    ];
+
+    // Used for parameter landing_page if unavailable
+    var pageDirectory = window.location.pathname.split("/").slice(0, -1).join("/") || '_root';
+    // Get the query string from the current URL
+    var queryString = window.location.search;
+    // Creates key:value pairs object from queryString
+    var urlSearchParams = new URLSearchParams(queryString);
+        
+    // Create a new object containing only the desired parameters
+    var params = {};
+    for (var i = 0; i < attributionParams.length; i++) {
+        var paramName = attributionParams[i];
+        var paramValue = urlSearchParams.get(paramName);
+        if (paramValue !== null) {
+            params[paramName] = paramValue;
+        } else {
+            if (paramName === 'landing_page') {
+                params[paramName] = pageDirectory;
+            }
+        }
+    }
+
+    // Convert the object to a JSON string
+    var attributionString = JSON.stringify(params).toLowerCase();
+
+    // Function sets basic session cookie
+    setSessionCookie('sessionAttribution', attributionString);
+}
+
+function handleAttributionTracking() {
+    var referrer = document.referrer;
+    var domainName = window.location.hostname;
+    var attributionCookieSet = sessionStorage.getItem('attributionCookieSet');
+    
+    if (referrer && new URL(referrer).hostname === domainName || attributionCookieSet) {
+      // Attribution tracking has already been executed
+      return;
+    }
+    
+    if (referrer && new URL(referrer).hostname !== domainName) {
+      setSessionAttributionCookie();
+      sessionStorage.setItem('attributionCookieSet', true);
+    } else if (sessionStorage && attributionCookieSet === null) {
+      setSessionAttributionCookie();
+      sessionStorage.setItem('attributionCookieSet', true);
+    } else {
+        console.log('Did not determine if landing page or cookie already set. No action.');
+    } 
+  }
+  handleAttributionTracking();
+</script>
