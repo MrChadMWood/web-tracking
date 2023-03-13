@@ -1,0 +1,102 @@
+<script>
+
+    function persistAttributionCookieAsQuery(sessionAttribution) {
+      
+      // Define the domains to be decorated
+      var domainsToDecorate = [
+        'example.com',
+        'example2.net'  
+      ];
+    
+      // Define an array of parameter names to transfer
+      var paramsToPersist = [
+          'utm_source',
+          'utm_medium',
+          'utm_campaign',
+          'utm_content',
+          'network',
+          'funnel'
+      ];
+      
+      // Get the session attribution cookie values
+      var attributionParams = JSON.parse(sessionAttribution);
+      var links = document.querySelectorAll('a');
+    
+      // Iterate over all the links on the page
+      for (var i = 0; i < links.length; i++) {
+        // Check if the link contains a domain to be decorated
+        for (var j = 0; j < domainsToDecorate.length; j++) {
+          if (links[i].href.indexOf(domainsToDecorate[j]) > -1) {
+            // Decorate the link with the appropriate query parameters
+            links[i].href = decorateLinkUrl(links[i].href, attributionParams, paramsToPersist);
+          }
+        }
+      }
+    
+      // Decorate the link URL with query parameters
+      function decorateLinkUrl(url, cookieParams, paramsToPersist) {
+        
+        // Split the URL into the base URL and any fragment identifier
+        var fragment = '';
+        if (url.indexOf('#') > -1) {
+          fragment = url.substring(url.indexOf('#'));
+          url = url.substring(0, url.indexOf('#'));
+        }
+        
+        // Add a query string to the base URL if one doesn't already exist
+        url = (url.indexOf('?') === -1) ? url + '?' : url + '&';
+        
+        // Collect the query parameters to transfer
+        var collectedParams = [];
+        for (var i = 0; i < paramsToPersist.length; i++) {
+          var paramName = paramsToPersist[i];
+          var paramValue = cookieParams[paramName] || getQueryParam(paramName);
+          if (paramValue) {
+            // Check if the parameter already exists in the query string
+            if (url.indexOf(paramName + '=') === -1) {
+              collectedParams.push(paramName + '=' + encodeURIComponent(paramValue));
+            }
+          }
+        }
+        
+        // Join the collected query parameters into a query string
+        var queryString = collectedParams.join('&');
+        // Return the decorated URL with the original fragment identifier
+        return url + queryString + fragment;
+      }
+    
+      // Get the value of a query parameter from the current URL
+      function getQueryParam(name) {
+        var match = (new RegExp('[?&]' + encodeURIComponent(name) + '=([^&]*)')).exec(window.location.search);
+        if (match) {
+            return decodeURIComponent(match[1]);
+        }
+      }
+    
+      // Get the value of a cookie
+      function getCookie(name) {
+        // Split the document.cookie string into an array of individual cookies
+        var cookies = document.cookie.split(';');
+      
+        // Loop through the cookies and find the one with the specified name
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+        
+          // If the cookie name matches, return the cookie value
+          if (cookie.indexOf(name + '=') === 0) {
+            return decodeURIComponent(cookie.substring(name.length + 1));
+          }
+        }
+      
+        // If the cookie is not found, return null
+        return null;
+      }
+    
+    }
+
+    var sessionAttribution = getCookie('sessionAttribution');
+    if (sessionAttribution) {
+        persistAttributionCookieAsQuery(sessionAttribution);
+    }
+    
+</script>
